@@ -1,7 +1,6 @@
-#include <MiniFB.h>
-#include "MiniFB_internal.h"
-#include "MiniFB_enums.h"
-#include "WindowData.h"
+#include "../MiniFB.h"
+#include "../MiniFB_internal.h"
+#include "../WindowData.h"
 #include "WindowData_Way.h"
 
 #include <wayland-client.h>
@@ -20,7 +19,7 @@
 
 #include <sys/mman.h>
 
-void init_keycodes();
+static void init_keycodes(void);
 
 static void
 destroy_window_data(SWindowData *window_data)
@@ -225,8 +224,6 @@ wl_keyboard_listener keyboard_listener = {
     .repeat_info = 0x0,
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 // Notification that this seat's pointer is focused on a certain surface.
 //
 // When a seat's focus enters a surface, the pointer image is
@@ -410,8 +407,6 @@ wl_pointer_listener pointer_listener = {
     .axis_discrete = 0x0,
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static void
 seat_capabilities(void *data, struct wl_seat *seat, enum wl_seat_capability caps)
 {
@@ -455,8 +450,6 @@ wl_seat_listener seat_listener = {
     .name         = 0x0,
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 // pixel format description
 //
 // Informs the client about a valid pixel format that can be used
@@ -490,8 +483,6 @@ static const struct
 wl_shm_listener shm_listener = {
     .format = shm_format
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
 registry_global(void *data, struct wl_registry *registry, uint32_t id, char const *iface, uint32_t version)
@@ -563,9 +554,7 @@ static const struct wl_shell_surface_listener shell_surface_listener = {
     handle_popup_done
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct mfb_window *
+MFB_API struct mfb_window *
 mfb_open_ex(const char *title, unsigned width, unsigned height, unsigned flags)
 {
     SWindowData *window_data = (SWindowData *) malloc(sizeof(SWindowData));
@@ -697,9 +686,7 @@ wl_callback_listener frame_listener = {
     .done = frame_done,
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned height)
 {
     uint32_t done = 0;
@@ -774,9 +761,7 @@ mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned 
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_events(struct mfb_window *window)
 {
     if(window == 0x0) {
@@ -800,11 +785,7 @@ mfb_update_events(struct mfb_window *window)
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern double   g_time_for_frame;
-
-bool
+MFB_API bool
 mfb_wait_sync(struct mfb_window *window) {
     if(window == 0x0) {
         return false;
@@ -847,11 +828,7 @@ mfb_wait_sync(struct mfb_window *window) {
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern short int g_keycodes[512];
-
-void
+static void
 init_keycodes(void)
 {
     // Clear keys
@@ -977,9 +954,7 @@ init_keycodes(void)
     g_keycodes[KEY_KPENTER]    = KB_KEY_KP_ENTER;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool
+MFB_API bool
 mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y, unsigned width, unsigned height) {
 
     SWindowData *window_data = (SWindowData *) window;
@@ -1001,9 +976,7 @@ mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y
     return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
+MFB_API void
 mfb_get_monitor_scale(struct mfb_window *window, float *scale_x, float *scale_y) {
     float x = 96.0, y = 96.0;
 

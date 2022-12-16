@@ -5,37 +5,30 @@
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 
-// I cannot find a way to get dpi under VirtualBox
-//#include <X11/Xresource.h>
-//#include <X11/extensions/Xrandr.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <MiniFB.h>
-#include <MiniFB_internal.h>
-#include "WindowData.h"
+#include "../MiniFB.h"
+#include "../MiniFB_internal.h"
+#include "../WindowData.h"
 #include "WindowData_X11.h"
 
 #if defined(USE_OPENGL_API)
-    #include <gl/MiniFB_GL.h>
+    #include "../gl/MiniFB_GL.h"
 #endif
 
 static Atom s_delete_window_atom;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void init_keycodes(SWindowData_X11 *window_data_x11);
+static void init_keycodes(SWindowData_X11 *window_data_x11);
 
 extern void
 stretch_image(uint32_t *srcImage, uint32_t srcX, uint32_t srcY, uint32_t srcWidth, uint32_t srcHeight, uint32_t srcPitch,
               uint32_t *dstImage, uint32_t dstX, uint32_t dstY, uint32_t dstWidth, uint32_t dstHeight, uint32_t dstPitch);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct mfb_window *
+MFB_API struct mfb_window *
 mfb_open_ex(const char *title, unsigned width, unsigned height, unsigned flags) {
     int depth, i, formatCount, convDepth = -1;
     XPixmapFormatValues* formats;
@@ -220,11 +213,9 @@ mfb_open_ex(const char *title, unsigned width, unsigned height, unsigned flags) 
     return (struct mfb_window *) window_data;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int translate_key(int scancode);
-int translate_mod(int state);
-int translate_mod_ex(int key, int state, int is_pressed);
+static int translate_key(int scancode);
+static int translate_mod(int state);
+static int translate_mod_ex(int key, int state, int is_pressed);
 
 static void
 processEvent(SWindowData *window_data, XEvent *event) {
@@ -396,11 +387,9 @@ processEvents(SWindowData *window_data) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static void destroy_window_data(SWindowData *window_data);
 
-void destroy_window_data(SWindowData *window_data);
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned height) {
     if (window == 0x0) {
         return STATE_INVALID_WINDOW;
@@ -476,9 +465,7 @@ mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned 
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_events(struct mfb_window *window) {
     if (window == 0x0) {
         return STATE_INVALID_WINDOW;
@@ -497,12 +484,7 @@ mfb_update_events(struct mfb_window *window) {
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern double   g_time_for_frame;
-extern bool     g_use_hardware_sync;
-
-bool
+MFB_API bool
 mfb_wait_sync(struct mfb_window *window) {
     if (window == 0x0) {
         return false;
@@ -550,9 +532,7 @@ mfb_wait_sync(struct mfb_window *window) {
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
+static void
 destroy_window_data(SWindowData *window_data)  {
     if (window_data != 0x0) {
         if (window_data->specific != 0x0) {
@@ -577,10 +557,6 @@ destroy_window_data(SWindowData *window_data)  {
         free(window_data);
     }
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern short int g_keycodes[512];
 
 static int
 translateKeyCodeB(int keySym) {
@@ -746,7 +722,7 @@ static int translateKeyCodeA(int keySym) {
     return KB_KEY_UNKNOWN;
 }
 
-void
+static void
 init_keycodes(SWindowData_X11 *window_data_x11) {
     size_t  i;
     int     keySym;
@@ -767,17 +743,13 @@ init_keycodes(SWindowData_X11 *window_data_x11) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int
+static int
 translate_key(int scancode) {
     if (scancode < 0 || scancode > 255)
         return KB_KEY_UNKNOWN;
 
     return g_keycodes[scancode];
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
 translate_mod(int state) {
@@ -798,8 +770,6 @@ translate_mod(int state) {
 
     return mod_keys;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
 translate_mod_ex(int key, int state, int is_pressed) {
@@ -845,9 +815,7 @@ translate_mod_ex(int key, int state, int is_pressed) {
     return mod_keys;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool
+MFB_API bool
 mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y, unsigned width, unsigned height)  {
     SWindowData *window_data = (SWindowData *) window;
 
@@ -867,22 +835,9 @@ mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
+MFB_API void
 mfb_get_monitor_scale(struct mfb_window *window, float *scale_x, float *scale_y) {
     float x = 96.0, y = 96.0;
-
-    if(window != 0x0) {
-        //SWindowData     *window_data     = (SWindowData *) window;
-        //SWindowData_X11 *window_data_x11 = (SWindowData_X11 *) window_data->specific;
-
-        // I cannot find a way to get dpi under VirtualBox
-        // XrmGetResource "Xft.dpi", "Xft.Dpi"
-        // XRRGetOutputInfo
-        // DisplayWidthMM, DisplayHeightMM
-        // All returning invalid values or 0
-    }
 
     if (scale_x) {
         *scale_x = x / 96.0f;

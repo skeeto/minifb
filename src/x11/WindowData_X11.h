@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MiniFB_enums.h>
+#include "../MiniFB.h"
 #include <stdint.h>
 #include <X11/Xlib.h>
 #if defined(USE_OPENGL_API)

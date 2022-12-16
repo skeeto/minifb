@@ -1,13 +1,12 @@
-#include <MiniFB.h>
-#include <MiniFB_internal.h>
-#include <WindowData.h>
+#include "../MiniFB.h"
+#include "../MiniFB_internal.h"
+#include "../WindowData.h"
 #include "WindowData_Win.h"
 #if defined(USE_OPENGL_API)
-    #include "gl/MiniFB_GL.h"
+    #include "../gl/MiniFB_GL.h"
 #endif
 #include <stdio.h>
 #include <stdlib.h>
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Copied (and modified) from Windows Kit 10 to avoid setting _WIN32_WINNT to a higher version
 typedef enum mfb_PROCESS_DPI_AWARENESS {
@@ -35,22 +34,22 @@ typedef BOOL(WINAPI *PFN_SetProcessDpiAwarenessContext)(HANDLE);
 typedef UINT(WINAPI *PFN_GetDpiForWindow)(HWND);
 typedef BOOL(WINAPI *PFN_EnableNonClientDpiScaling)(HWND);
 
-HMODULE                           mfb_user32_dll                    = 0x0;
-PFN_SetProcessDPIAware            mfb_SetProcessDPIAware            = 0x0;
-PFN_SetProcessDpiAwarenessContext mfb_SetProcessDpiAwarenessContext = 0x0;
-PFN_GetDpiForWindow               mfb_GetDpiForWindow               = 0x0;
-PFN_EnableNonClientDpiScaling     mfb_EnableNonClientDpiScaling     = 0x0;
+static HMODULE                           mfb_user32_dll;
+static PFN_SetProcessDPIAware            mfb_SetProcessDPIAware;
+static PFN_SetProcessDpiAwarenessContext mfb_SetProcessDpiAwarenessContext;
+static PFN_GetDpiForWindow               mfb_GetDpiForWindow;
+static PFN_EnableNonClientDpiScaling     mfb_EnableNonClientDpiScaling;
 
 // shcore.dll
 typedef HRESULT(WINAPI *PFN_SetProcessDpiAwareness)(mfb_PROCESS_DPI_AWARENESS);
 typedef HRESULT(WINAPI *PFN_GetDpiForMonitor)(HMONITOR, mfb_MONITOR_DPI_TYPE, UINT *, UINT *);
 
-HMODULE                           mfb_shcore_dll                    = 0x0;
-PFN_SetProcessDpiAwareness        mfb_SetProcessDpiAwareness        = 0x0;
-PFN_GetDpiForMonitor              mfb_GetDpiForMonitor              = 0x0;
+static HMODULE                    mfb_shcore_dll;
+static PFN_SetProcessDpiAwareness mfb_SetProcessDpiAwareness;
+static PFN_GetDpiForMonitor       mfb_GetDpiForMonitor;
 
 //--
-void
+static void
 load_functions() {
     if(mfb_user32_dll == 0x0) {
         mfb_user32_dll = LoadLibraryA("user32.dll");
@@ -73,7 +72,7 @@ load_functions() {
 
 //--
 // NOT Thread safe. Just convenient (Don't do this at home guys)
-char *
+static char *
 GetErrorMessage() {
     static char buffer[256];
 
@@ -90,7 +89,7 @@ GetErrorMessage() {
 }
 
 //--
-void
+static void
 dpi_aware() {
     if (mfb_SetProcessDpiAwarenessContext != 0x0) {
         if(mfb_SetProcessDpiAwarenessContext(mfb_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == false) {
@@ -119,7 +118,7 @@ dpi_aware() {
 }
 
 //--
-void
+static void
 get_monitor_scale(HWND hWnd, float *scale_x, float *scale_y) {
     UINT    x, y;
 
@@ -149,9 +148,7 @@ get_monitor_scale(HWND hWnd, float *scale_x, float *scale_y) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
+MFB_API void
 mfb_get_monitor_scale(struct mfb_window *window, float *scale_x, float *scale_y) {
     HWND hWnd = 0x0;
 
@@ -163,19 +160,15 @@ mfb_get_monitor_scale(struct mfb_window *window, float *scale_x, float *scale_y)
     get_monitor_scale(hWnd, scale_x, scale_y);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static long s_window_style = WS_POPUP | WS_SYSMENU | WS_CAPTION;
 
-long    s_window_style = WS_POPUP | WS_SYSMENU | WS_CAPTION;
+static void init_keycodes(void);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static uint32_t translate_mod(void);
+static mfb_key translate_key(unsigned int wParam, unsigned long lParam);
+static void destroy_window_data(SWindowData *window_data);
 
-void init_keycodes();
-
-uint32_t translate_mod();
-mfb_key  translate_key(unsigned int wParam, unsigned long lParam);
-void     destroy_window_data(SWindowData *window_data);
-
-LRESULT CALLBACK
+static LRESULT CALLBACK
 WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     LRESULT res = 0;
 
@@ -444,9 +437,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return res;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct mfb_window *
+MFB_API struct mfb_window *
 mfb_open_ex(const char *title, unsigned width, unsigned height, unsigned flags) {
     RECT rect = { 0 };
     int  x = 0, y = 0;
@@ -612,9 +603,7 @@ mfb_open_ex(const char *title, unsigned width, unsigned height, unsigned flags) 
     return (struct mfb_window *) window_data;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned height) {
     MSG msg;
 
@@ -660,9 +649,7 @@ mfb_update_ex(struct mfb_window *window, void *buffer, unsigned width, unsigned 
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_update_state
+MFB_API mfb_update_state
 mfb_update_events(struct mfb_window *window) {
     MSG msg;
 
@@ -687,12 +674,10 @@ mfb_update_events(struct mfb_window *window) {
     return STATE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 extern double   g_time_for_frame;
 extern bool     g_use_hardware_sync;
 
-bool
+MFB_API bool
 mfb_wait_sync(struct mfb_window *window) {
     if (window == 0x0) {
         return false;
@@ -738,9 +723,7 @@ mfb_wait_sync(struct mfb_window *window) {
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
+static void
 destroy_window_data(SWindowData *window_data) {
     if (window_data == 0x0)
         return;
@@ -771,8 +754,6 @@ destroy_window_data(SWindowData *window_data) {
     window_data->close       = true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 uint32_t
 translate_mod() {
     uint32_t mods = 0;
@@ -793,11 +774,9 @@ translate_mod() {
     return mods;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 extern short int g_keycodes[512];
 
-void
+static void
 init_keycodes() {
     if(g_keycodes[0x00B] != KB_KEY_0) {
         g_keycodes[0x00B] = KB_KEY_0;
@@ -924,9 +903,7 @@ init_keycodes() {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-mfb_key
+static mfb_key
 translate_key(unsigned int wParam, unsigned long lParam) {
     if (wParam == VK_CONTROL) {
         MSG next;
@@ -950,9 +927,7 @@ translate_key(unsigned int wParam, unsigned long lParam) {
     return (mfb_key) g_keycodes[HIWORD(lParam) & 0x1FF];
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool
+MFB_API bool
 mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y, unsigned width, unsigned height) {
     SWindowData     *window_data     = (SWindowData *) window;
     SWindowData_Win *window_data_win = 0x0;
@@ -988,12 +963,7 @@ mfb_set_viewport(struct mfb_window *window, unsigned offset_x, unsigned offset_y
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern double   g_timer_frequency;
-extern double   g_timer_resolution;
-
-uint64_t
+MFB_API uint64_t
 mfb_timer_tick() {
     int64_t     counter;
 
@@ -1002,7 +972,7 @@ mfb_timer_tick() {
     return counter;
 }
 
-void
+MFB_API void
 mfb_timer_init() {
     uint64_t    frequency;
 

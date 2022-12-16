@@ -1,12 +1,12 @@
 #if defined(USE_OPENGL_API)
 
 #include "MiniFB_GL.h"
-#include "MiniFB_internal.h"
+#include "../MiniFB_internal.h"
 #if defined(_WIN32) || defined(WIN32)
-    #include <windows/WindowData_Win.h>
-    #include <gl/gl.h>
+    #include "../windows/WindowData_Win.h"
+    #include <GL/gl.h>
 #elif defined(linux)
-    #include <x11/WindowData_X11.h>
+    #include "../x11/WindowData_X11.h"
     #include <GL/gl.h>
     #include <GL/glx.h>
 #endif

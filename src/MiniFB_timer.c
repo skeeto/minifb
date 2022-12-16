@@ -1,19 +1,19 @@
-#include <MiniFB.h>
+#include "MiniFB.h"
 #include "MiniFB_internal.h"
 #include <stdlib.h>
 
 //-------------------------------------
-double      g_timer_frequency;
-double      g_timer_resolution;
-double      g_time_for_frame = 1.0 / 60.0;
-bool        g_use_hardware_sync = false;
+static double      g_timer_frequency;
+static double      g_timer_resolution;
+static double      g_time_for_frame = 1.0 / 60.0;
+static bool        g_use_hardware_sync = false;
 
 //-------------------------------------
-extern uint64_t mfb_timer_tick(void);
-extern void mfb_timer_init(void);
+MFB_API uint64_t mfb_timer_tick(void);
+MFB_API void mfb_timer_init(void);
 
 //-------------------------------------
-void
+MFB_API void
 mfb_set_target_fps(uint32_t fps) {
     if(fps == 0) {
         g_time_for_frame = 0;
@@ -25,7 +25,7 @@ mfb_set_target_fps(uint32_t fps) {
 }
 
 //-------------------------------------
-unsigned
+MFB_API unsigned
 mfb_get_target_fps() {
     if (g_time_for_frame == 0) {
         return 0;
@@ -36,7 +36,7 @@ mfb_get_target_fps() {
 }
 
 //-------------------------------------
-struct mfb_timer *
+MFB_API struct mfb_timer *
 mfb_timer_create() {
     static int  once = 1;
     mfb_timer   *tmr;
@@ -53,7 +53,7 @@ mfb_timer_create() {
 }
 
 //-------------------------------------
-void
+MFB_API void
 mfb_timer_destroy(struct mfb_timer *tmr) {
     if(tmr != 0x0) {
         free(tmr);
@@ -61,7 +61,7 @@ mfb_timer_destroy(struct mfb_timer *tmr) {
 }
 
 //-------------------------------------
-void
+MFB_API void
 mfb_timer_reset(struct mfb_timer *tmr) {
     if(tmr == 0x0)
         return;
@@ -72,7 +72,7 @@ mfb_timer_reset(struct mfb_timer *tmr) {
 }
 
 //-------------------------------------
-double
+MFB_API double
 mfb_timer_now(struct mfb_timer *tmr) {
     uint64_t    counter;
 
@@ -87,7 +87,7 @@ mfb_timer_now(struct mfb_timer *tmr) {
 }
 
 //-------------------------------------
-double
+MFB_API double
 mfb_timer_delta(struct mfb_timer *tmr) {
     int64_t     counter;
     uint64_t    delta;
@@ -103,13 +103,13 @@ mfb_timer_delta(struct mfb_timer *tmr) {
 }
 
 //-------------------------------------
-double
+MFB_API double
 mfb_timer_get_frequency() {
     return g_timer_frequency;
 }
 
 //-------------------------------------
-double
+MFB_API double
 mfb_timer_get_resolution() {
     return g_timer_resolution;
 }

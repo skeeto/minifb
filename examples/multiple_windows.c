@@ -15,8 +15,6 @@ static unsigned int g_buffer_a[WIDTH_A * HEIGHT_A];
 #define HEIGHT_B     240
 static unsigned int g_buffer_b[WIDTH_B * HEIGHT_B];
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void 
 active(struct mfb_window *window, bool isActive) {
     const char *window_title = "";
@@ -86,8 +84,6 @@ mouse_scroll(struct mfb_window *window, mfb_key_mod mod, float deltaX, float del
     }
     fprintf(stdout, "%s > mouse_scroll: x: %f, y: %f [key_mod: %x]\n", window_title, deltaX, deltaY, mod);
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int 
 main()
